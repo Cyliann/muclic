@@ -8,7 +8,7 @@ yt = YTMusic()
 alternate = 0
 
 query = input("\033[1m\033[95mSearch: \033[0m")
-search = (yt.search(query, filter='albums', limit=10))
+search = yt.search(query, filter='albums')
 
 for i in search:
     if alternate:
