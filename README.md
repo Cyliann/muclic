@@ -22,3 +22,9 @@ Just download the script and put it in your executables directory. (eg. `/usr/bi
  2. Enter the name of the album/artist/song.
  3. Choose a number/multiple numbers to choose which album you want to download.
  4. Rest.
+
+## To do
+
+ - Windows support
+ - Auto ID3 tagging
+ - In-line command options
