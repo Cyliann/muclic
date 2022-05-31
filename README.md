@@ -1,4 +1,4 @@
-# Muclic - a cli for downloading music
+# MuCLIc - a cli for downloading music
 This little Python script downloads music albums from YTMusic.
 
 
