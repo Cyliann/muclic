@@ -1,19 +1,24 @@
 #!/usr/bin/python
 
-from ytmusicapi import YTMusic
+from ytmusicapi import YTMusic as yt
 import os
 import subprocess
 
-yt = YTMusic()
 
-query = input("\033[1m\033[95mSearch: \033[0m")
-search = yt.search(query, filter='albums')
+def main():
+    query = input("\033[1m\033[95mSearch: \033[0m")
+    search = yt.search(query, filter='albums')
+
+    download_data = get_albums(search)
+    download(download_data)
 
 
 def get_albums(search):
     alternate = 0
     paths = []
     urls = []
+    album_list = []
+    artist_list = []
 
     for i in search:
         if alternate:
@@ -33,25 +38,27 @@ def get_albums(search):
     choices = choice.split()
 
     for i, choice in enumerate(choices):
-        albumId = search[int(choice) - 1]['browseId']
-        albumTitle = search[int(choice) - 1]['title']
+        album_id = search[int(choice) - 1]['browseId']
+        album_title = search[int(choice) - 1]['title']
         artist = search[int(choice) - 1]['artists'][0]['name']
-        urls.append("https://music.youtube.com/playlist?list=" + yt.get_album(albumId)['audioPlaylistId'])
-        paths.append( os.path.expanduser(f"~/Music/{artist}/{albumTitle}"))
+        urls.append("https://music.youtube.com/playlist?list=" + yt.get_album(album_id)['audioPlaylistId'])
+        paths.append(os.path.expanduser(f"~/Music/{artist}/{album_title}"))
+        album_list.append(album_title)
+        artist_list.append(artist)
 
-    return list(zip(urls, paths))
+    return list(zip(urls, paths, album_list, artist_list))
 
 
-downloadData = get_albums(search)
-
-
-def download(downloadData):
-    for i in enumerate(downloadData):
-        path = downloadData[i][1]
-        url = downloadData[i][0]
+def download(albums):
+    for album in albums:
+        url = album[0]
+        path = album[1]
 
         subprocess.run(['mkdir', '-p', path])
         os.chdir(path)
-        subprocess.run(['yt-dlp', '-f', 'm4a', '-o', '%(artist)s - %(track)s.%(ext)s', url])
+        subprocess.run(['yt-dlp', '-f', 'm4a', '-o', '%(first_artist)s - %(title)s.%(ext)s', '--parse-metadata',
+                        'artist:^(?P<first_artist>[^,]+)', url])
 
-download(downloadData)
+
+if __name__ == '__main__':
+    main()
