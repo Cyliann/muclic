@@ -4,7 +4,7 @@ This little Python script downloads music albums from YTMusic.
 
 # Installation
 
-Just download the script and put it in your executables directory. (eg. `/usr/bin/` or `~/.local/bin/`)
+Just download the script and put it in your executables directory (eg. `/usr/bin/` or `~/.local/bin/`).
 
 ## Dependencies
 
@@ -25,6 +25,5 @@ Just download the script and put it in your executables directory. (eg. `/usr/bi
 
 ## To do
 
- - Windows support
  - Auto ID3 tagging
  - In-line command options
