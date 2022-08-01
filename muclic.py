@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from yt_dlp.extractor import kakao
 from ytmusicapi import YTMusic
 import os
 from yt_dlp import YoutubeDL
