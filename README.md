@@ -8,9 +8,13 @@ Just download the script and put it in your executables directory (eg. `/usr/bin
 
 ## Dependencies
 
+### Hard
  - Python
  - [YTMusicAPI](https://github.com/sigma67/ytmusicapi)
  - [yt-dlp](https://github.com/yt-dlp/yt-dlp) (youtube-dl won't work because it doesn't support output formatting)
+ 
+### Optional
+ - [ffmpeg[(https://github.com/FFmpeg/FFmpeg
  
  To dowload dependencies just paste this into your terminal
 
