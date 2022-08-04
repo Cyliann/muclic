@@ -15,6 +15,8 @@ Just download the script and put it in your executables directory (eg. `/usr/bin
  
 ### Optional
  - [ffmpeg](https://github.com/FFmpeg/FFmpeg)
+
+
  
  To dowload dependencies just paste this into your terminal
 
