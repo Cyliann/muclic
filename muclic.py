@@ -62,27 +62,60 @@ def download(download_data):
     :return: none
     """
 
-    ydl_opts = {
-        'format': 'm4a/bestaudio',
-        'outtmpl': {
-            'default': f'%(artist)s~%(title)s.%(ext)s',
-        }
-    }
-
     for album in download_data:
         url = album[0]
         path = album[1]
+        artist = album[3]
 
-        os.makedirs(path, mode=0o755)
+        os.makedirs(path, mode=0o755, exist_ok=True)
         os.chdir(path)
 
-        with YoutubeDL(ydl_opts) as ydl:
-            ydl.download(url)
+        ydl_opts = {
+            'format': 'm4a/bestaudio',
+            'forcejon': True,
+            'dump_single_json': True,
+            'outtmpl': {
+                'default': f'{artist} - %(title)s.%(ext)s',
+            }
+        }
 
-        # Rename files in case yt_dlp fetches many artists
-        for file in os.listdir(os.getcwd()):
-            new_filename = f"{file.split('~')[0].split(',')[0]} - {file.split('~')[1]}"
-            os.rename(file, new_filename)
+        with YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=True)
+
+            tag_songs(info, path)
+
+
+def tag_songs(info, path):
+    """
+    :param: info: json of all data yt_dlp dumps
+    :param: path: path to the directory with songs to be tagged
+    :return: none
+    """
+    import taglib
+
+    for entry, file in zip(info['entries'], os.listdir(path)):
+        song = taglib.File(file)
+        song.tags['ARTIST'] = [entry['artist'].split(',')[0].encode('utf-8')]
+        song.tags['ALBUM'] = [entry['album'].encode('utf-8')]
+        song.tags['TITLE'] = [entry['track'].encode('utf-8')]
+
+        if entry['release_year'] is not None:
+            song.tags['DATE'] = [entry['release_year'].encode('utf-8')]
+
+        try:
+            song.tags['GENRE'] = [entry['genre'].encode('utf-8')]  # Some songs don't have 'genre' field
+        except KeyError:
+            pass
+
+        try:
+            song.tags['TRACKNUMBER'] = [
+                entry['track_number'].encode('utf-8')]  # Some songs don't have 'track_number' field
+        except KeyError:
+            try:
+                song.tags['TRACKNUMBER'] = [str(entry['playlist_index']).encode('utf-8')]
+            except KeyError:
+                pass
+        song.save()
 
 
 if __name__ == '__main__':
