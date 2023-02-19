@@ -3,6 +3,12 @@ from ytmusicapi import YTMusic
 import os
 from yt_dlp import YoutubeDL
 
+class Record:
+    def __init__(self, title, artist, path, url):
+        self.title = title
+        self.artist = artist
+        self.path = path
+        self.url = url
 
 def main():
     query = input("\033[1m\033[95mSearch: \033[0m")
@@ -19,10 +25,7 @@ def get_albums(search_results, yt):
     """
 
     alternate = 0
-    paths = []
-    urls = []
-    album_list = []
-    artist_list = []
+    records = []
 
     for index, i in enumerate(search_results):
         if alternate:
@@ -33,8 +36,8 @@ def get_albums(search_results, yt):
             alternate = 1
         print(color + '(' + str(index + 1) + ') ' + i['artists'][0]['name'] + ' - ' + i['title'] + '\033[0m')
 
-    print('\033[1m\033[93m(q) Exit\033[0m')
-    i = input("\033[1m\033[95mChoose a number: \033[0m")
+    print('\033[1m\033[93m' + "(q) Exit" + '\033[0m')
+    i = input('\033[1m\033[95m' + "Choose a number: " + '\033[0m')
 
     if i.strip().lower() == 'q':
         exit()
@@ -48,12 +51,14 @@ def get_albums(search_results, yt):
         album_title = album['title']
         artist = album['artists'][0]['name']
 
-        urls.append("https://music.youtube.com/playlist?list=" + yt.get_album(album_id)['audioPlaylistId'])
-        paths.append(os.path.expanduser(f"~/Music/{artist}/{album_title}"))
-        album_list.append(album_title)
-        artist_list.append(artist)
+        url = "https://music.youtube.com/playlist?list=" + yt.get_album(album_id)['audioPlaylistId']
+        path = os.path.expanduser(f"~/Music/{artist}/{album_title}")
 
-    return list(zip(urls, paths, album_list, artist_list))
+        record = Record(album_title, artist, path, url)
+
+        records.append(record)
+
+    return records
 
 
 def download(download_data):
@@ -62,10 +67,10 @@ def download(download_data):
     :return: none
     """
 
-    for album in download_data:
-        url = album[0]
-        path = album[1]
-        artist = album[3]
+    for record in download_data:
+        url = record.url
+        path = record.path
+        artist = record.artist
 
         os.makedirs(path, mode=0o755, exist_ok=True)
         os.chdir(path)
@@ -91,7 +96,15 @@ def tag_songs(info, path):
     :param: path: path to the directory with songs to be tagged
     :return: none
     """
-    import taglib
+
+    try:
+        import taglib
+    except ModuleNotFoundError:
+        print("[" + '\033[93m' + "Warning" + '\033[0m' + "] Module pytaglib not installed.\n" 
+              "[" + '\033[93m' + "Warning" + '\033[0m' + "] Install it with 'pip install pytaglib'\n" 
+              "[" + '\033[93m' + "Warning" + '\033[0m' + "] Skipping tagging")
+        
+        exit()
 
     for entry, file in zip(info['entries'], os.listdir(path)):
         song = taglib.File(file)
@@ -107,9 +120,8 @@ def tag_songs(info, path):
         except KeyError:
             pass
 
-        try:
-            song.tags['TRACKNUMBER'] = [
-                entry['track_number'].encode('utf-8')]  # Some songs don't have 'track_number' field
+        try: # Some songs don't have 'track_number' field
+            song.tags['TRACKNUMBER'] = [entry['track_number'].encode('utf-8')]  
         except KeyError:
             try:
                 song.tags['TRACKNUMBER'] = [str(entry['playlist_index']).encode('utf-8')]

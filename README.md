@@ -14,19 +14,19 @@ Just download the script and put it in your executables directory (eg. `/usr/bin
  - [yt-dlp](https://github.com/yt-dlp/yt-dlp) (youtube-dl won't work because it doesn't support output formatting)
  
 ### Optional
- - [ffmpeg](https://github.com/FFmpeg/FFmpeg)
+ - [pytaglib](https://github.com/supermihi/pytaglib) (for basic tagging)
 
 
  
  To dowload dependencies just paste this into your terminal
 
-    pip install yt-dlp ytmusicapi
+    pip install yt-dlp ytmusicapi pytaglib
 
 ## Usage
 
  1. Type `muclic.py` into your terminal. (or `python -m muclic.py` if you're a Windows user)
  2. Enter the name of the album/artist/song.
- 3. Choose a number/multiple numbers to choose which album you want to download.
+ 3. Choose a number/multiple numbers to select which album you want to download.
  4. Rest.
 
 ## To do
