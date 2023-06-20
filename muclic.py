@@ -3,6 +3,7 @@ from ytmusicapi import YTMusic
 import os
 from yt_dlp import YoutubeDL
 
+
 class Record:
     def __init__(self, title, artist, path, url):
         self.title = title
@@ -10,10 +11,11 @@ class Record:
         self.path = path
         self.url = url
 
+
 def main():
     query = input("\033[1m\033[95mSearch: \033[0m")
     yt = YTMusic()
-    search_results = yt.search(query, filter='albums')
+    search_results = yt.search(query, filter="albums")
     download_data = get_albums(search_results, yt)
     download(download_data)
 
@@ -27,31 +29,43 @@ def get_albums(search_results, yt):
     alternate = 0
     records = []
 
-    for index, i in enumerate(search_results):
+    for index, result in enumerate(search_results):
         if alternate:
-            color = '\033[94m'
+            color = "\033[94m"
             alternate = 0
         else:
-            color = '\033[96m'
+            color = "\033[96m"
             alternate = 1
-        print(color + '(' + str(index + 1) + ') ' + i['artists'][0]['name'] + ' - ' + i['title'] + '\033[0m')
+        print(
+            color
+            + "("
+            + str(index + 1)
+            + ") "
+            + result["artists"][1]["name"]
+            + " - "
+            + result["title"]
+            + "\033[0m"
+        )
 
-    print('\033[1m\033[93m' + "(q) Exit" + '\033[0m')
-    i = input('\033[1m\033[95m' + "Choose a number: " + '\033[0m')
+    print("\033[1m\033[93m" + "(q) Exit" + "\033[0m")
+    result = input("\033[1m\033[95m" + "Choose a number: " + "\033[0m")
 
-    if i.strip().lower() == 'q':
+    if result.strip().lower() == "q":
         exit()
 
-    choices = i.split()
+    choices = result.split()
 
-    for i in choices:
-        album = search_results[int(i) - 1]
+    for result in choices:
+        album = search_results[int(result) - 1]
 
-        album_id = album['browseId']
-        album_title = album['title']
-        artist = album['artists'][0]['name']
+        album_id = album["browseId"]
+        album_title = album["title"]
+        artist = album["artists"][1]["name"]
 
-        url = "https://music.youtube.com/playlist?list=" + yt.get_album(album_id)['audioPlaylistId']
+        url = (
+            "https://music.youtube.com/playlist?list="
+            + yt.get_album(album_id)["audioPlaylistId"]
+        )
         path = os.path.expanduser(f"~/Music/{artist}/{album_title}")
 
         record = Record(album_title, artist, path, url)
@@ -76,12 +90,12 @@ def download(download_data):
         os.chdir(path)
 
         ydl_opts = {
-            'format': 'm4a/bestaudio',
-            'forcejon': True,
-            'dump_single_json': True,
-            'outtmpl': {
-                'default': f'{artist} - %(title)s.%(ext)s',
-            }
+            "format": "m4a/bestaudio",
+            "forcejon": True,
+            "dump_single_json": True,
+            "outtmpl": {
+                "default": f"{artist} - %(title)s.%(ext)s",
+            },
         }
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -100,35 +114,49 @@ def tag_songs(info, path):
     try:
         import taglib
     except ModuleNotFoundError:
-        print("[" + '\033[93m' + "Warning" + '\033[0m' + "] Module pytaglib not installed.\n" 
-              "[" + '\033[93m' + "Warning" + '\033[0m' + "] Install it with 'pip install pytaglib'\n" 
-              "[" + '\033[93m' + "Warning" + '\033[0m' + "] Skipping tagging")
-        
+        print(
+            "["
+            + "\033[93m"
+            + "Warning"
+            + "\033[0m"
+            + "] Module pytaglib not installed.\n"
+            "["
+            + "\033[93m"
+            + "Warning"
+            + "\033[0m"
+            + "] Install it with 'pip install pytaglib'\n"
+            "[" + "\033[93m" + "Warning" + "\033[0m" + "] Skipping tagging"
+        )
+
         exit()
 
-    for entry, file in zip(info['entries'], os.listdir(path)):
+    for entry, file in zip(info["entries"], os.listdir(path)):
         song = taglib.File(file)
-        song.tags['ARTIST'] = [entry['artist'].split(',')[0].encode('utf-8')]
-        song.tags['ALBUM'] = [entry['album'].encode('utf-8')]
-        song.tags['TITLE'] = [entry['track'].encode('utf-8')]
+        song.tags["ARTIST"] = [entry["artist"].split(",")[0].encode("utf-8")]
+        song.tags["ALBUM"] = [entry["album"].encode("utf-8")]
+        song.tags["TITLE"] = [entry["track"].encode("utf-8")]
 
-        if entry['release_year'] is not None:
-            song.tags['DATE'] = [entry['release_year'].encode('utf-8')]
+        if entry["release_year"] is not None:
+            song.tags["DATE"] = [str(entry["release_year"]).encode("utf-8")]
 
         try:
-            song.tags['GENRE'] = [entry['genre'].encode('utf-8')]  # Some songs don't have 'genre' field
+            song.tags["GENRE"] = [
+                entry["genre"].encode("utf-8")
+            ]  # Some songs don't have 'genre' field
         except KeyError:
             pass
 
-        try: # Some songs don't have 'track_number' field
-            song.tags['TRACKNUMBER'] = [entry['track_number'].encode('utf-8')]  
+        try:  # Some songs don't have 'track_number' field
+            song.tags["TRACKNUMBER"] = [entry["track_number"].encode("utf-8")]
         except KeyError:
             try:
-                song.tags['TRACKNUMBER'] = [str(entry['playlist_index']).encode('utf-8')]
+                song.tags["TRACKNUMBER"] = [
+                    str(entry["playlist_index"]).encode("utf-8")
+                ]
             except KeyError:
                 pass
         song.save()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
