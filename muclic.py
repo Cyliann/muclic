@@ -2,6 +2,7 @@
 from ytmusicapi import YTMusic
 import os
 from yt_dlp import YoutubeDL
+import fnmatch
 
 
 class Record:
@@ -99,9 +100,9 @@ def download(download_data):
         }
 
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
+            info = ydl.extract_info(url, download=True, process=True)
 
-            tag_songs(info, path)
+            tag_songs((ydl.sanitize_info(info)), path)
 
 
 def tag_songs(info, path):
@@ -130,32 +131,35 @@ def tag_songs(info, path):
 
         exit()
 
-    for entry, file in zip(info["entries"], os.listdir(path)):
-        song = taglib.File(file)
-        song.tags["ARTIST"] = [entry["artist"].split(",")[0].encode("utf-8")]
-        song.tags["ALBUM"] = [entry["album"].encode("utf-8")]
-        song.tags["TITLE"] = [entry["track"].encode("utf-8")]
+    for entry in info["entries"]:
+        for file in os.listdir(path):
+            if fnmatch.fnmatch(file, f"*{entry['track']}.*"):
+                print(f"[tagging] File: {file} Title: {entry['track']}")
+                song = taglib.File(file)
+                song.tags["ARTIST"] = [entry["artist"].split(",")[0].encode("utf-8")]
+                song.tags["ALBUM"] = [entry["album"].encode("utf-8")]
+                song.tags["TITLE"] = [entry["track"].encode("utf-8")]
 
-        if entry["release_year"] is not None:
-            song.tags["DATE"] = [str(entry["release_year"]).encode("utf-8")]
+                if entry["release_year"] is not None:
+                    song.tags["DATE"] = [str(entry["release_year"]).encode("utf-8")]
 
-        try:
-            song.tags["GENRE"] = [
-                entry["genre"].encode("utf-8")
-            ]  # Some songs don't have 'genre' field
-        except KeyError:
-            pass
+                try:
+                    song.tags["GENRE"] = [
+                        entry["genre"].encode("utf-8")
+                    ]  # Some songs don't have 'genre' field
+                except KeyError:
+                    pass
 
-        try:  # Some songs don't have 'track_number' field
-            song.tags["TRACKNUMBER"] = [entry["track_number"].encode("utf-8")]
-        except KeyError:
-            try:
-                song.tags["TRACKNUMBER"] = [
-                    str(entry["playlist_index"]).encode("utf-8")
-                ]
-            except KeyError:
-                pass
-        song.save()
+                try:  # Some songs don't have 'track_number' field
+                    song.tags["TRACKNUMBER"] = [entry["track_number"].encode("utf-8")]
+                except KeyError:
+                    try:
+                        song.tags["TRACKNUMBER"] = [
+                            str(entry["playlist_index"]).encode("utf-8")
+                        ]
+                    except KeyError:
+                        pass
+                song.save()
 
 
 if __name__ == "__main__":
