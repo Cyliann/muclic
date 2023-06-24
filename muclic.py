@@ -3,6 +3,7 @@ from ytmusicapi import YTMusic
 import os
 from yt_dlp import YoutubeDL
 import fnmatch
+import sys
 
 
 class Record:
@@ -100,9 +101,9 @@ def download(download_data):
         }
 
         with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True, process=True)
+            info = ydl.sanitize_info(ydl.extract_info(url, download=True, process=True))
 
-            tag_songs((ydl.sanitize_info(info)), path)
+            tag_songs(info, path)
 
 
 def tag_songs(info, path):
@@ -113,7 +114,7 @@ def tag_songs(info, path):
     """
 
     try:
-        import taglib
+        from mutagen.mp4 import MP4
     except ModuleNotFoundError:
         print(
             "["
@@ -133,34 +134,45 @@ def tag_songs(info, path):
 
     for entry in info["entries"]:
         for file in os.listdir(path):
+            # Find the right file to tag
             if fnmatch.fnmatch(file, f"*{entry['track']}.*"):
                 print(f"[tagging] File: {file} Title: {entry['track']}")
-                song = taglib.File(file)
-                song.tags["ARTIST"] = [entry["artist"].split(",")[0].encode("utf-8")]
-                song.tags["ALBUM"] = [entry["album"].encode("utf-8")]
-                song.tags["TITLE"] = [entry["track"].encode("utf-8")]
+
+                tags = MP4(file).tags
+
+                if not tags:  # I put this here just to silence my IDE
+                    continue
+
+                tags["\xa9ART"] = entry["artist"].split(",")[0]
+                tags["\xa9alb"] = entry["album"]
+                tags["\xa9nam"] = entry["track"]
 
                 if entry["release_year"] is not None:
-                    song.tags["DATE"] = [str(entry["release_year"]).encode("utf-8")]
+                    tags["\xa9day"] = str(entry["release_year"])
 
                 try:
-                    song.tags["GENRE"] = [
-                        entry["genre"].encode("utf-8")
+                    tags["\xa9gen"] = [
+                        entry["genre"]
                     ]  # Some songs don't have 'genre' field
                 except KeyError:
                     pass
 
                 try:  # Some songs don't have 'track_number' field
-                    song.tags["TRACKNUMBER"] = [entry["track_number"].encode("utf-8")]
+                    tracks = entry["track_number"]
+                    total = entry["n_entries"]
+                    tags["trkn"] = [(tracks, total)]
                 except KeyError:
                     try:
-                        song.tags["TRACKNUMBER"] = [
-                            str(entry["playlist_index"]).encode("utf-8")
-                        ]
+                        tracks = entry["playlist_index"]
+                        total = entry["n_entries"]
+                        tags["trkn"] = [(tracks, total)]
                     except KeyError:
                         pass
-                song.save()
+                tags.save(file)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)
