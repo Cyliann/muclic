@@ -4,6 +4,14 @@ import os
 from yt_dlp import YoutubeDL
 import fnmatch
 import sys
+import urllib.request
+
+try:
+    from mutagen.mp4 import MP4, MP4Cover
+except ModuleNotFoundError:
+    IFTAG = False
+else:
+    IFTAG = True
 
 
 class Record:
@@ -103,19 +111,16 @@ def download(download_data):
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.sanitize_info(ydl.extract_info(url, download=True, process=True))
 
-            tag_songs(info, path)
+            tagging(info, path)
 
 
-def tag_songs(info, path):
+def tagging(info, path):
     """
     :param: info: json of all data yt_dlp dumps
     :param: path: path to the directory with songs to be tagged
     :return: none
     """
-
-    try:
-        from mutagen.mp4 import MP4
-    except ModuleNotFoundError:
+    if not IFTAG:
         print(
             "["
             + "\033[93m"
@@ -132,43 +137,65 @@ def tag_songs(info, path):
 
         exit()
 
+    cover, _ = get_cover(info)
+
     for entry in info["entries"]:
         for file in os.listdir(path):
             # Find the right file to tag
             if fnmatch.fnmatch(file, f"*{entry['track']}.*"):
-                print(f"[tagging] File: {file} Title: {entry['track']}")
-
                 tags = MP4(file).tags
 
                 if not tags:  # I put this here just to silence my IDE
                     continue
 
-                tags["\xa9ART"] = entry["artist"].split(",")[0]
-                tags["\xa9alb"] = entry["album"]
-                tags["\xa9nam"] = entry["track"]
+                tag_song(entry, cover, file, tags)
 
-                if entry["release_year"] is not None:
-                    tags["\xa9day"] = str(entry["release_year"])
+    os.remove(cover)
 
-                try:
-                    tags["\xa9gen"] = [
-                        entry["genre"]
-                    ]  # Some songs don't have 'genre' field
-                except KeyError:
-                    pass
 
-                try:  # Some songs don't have 'track_number' field
-                    tracks = entry["track_number"]
-                    total = entry["n_entries"]
-                    tags["trkn"] = [(tracks, total)]
-                except KeyError:
-                    try:
-                        tracks = entry["playlist_index"]
-                        total = entry["n_entries"]
-                        tags["trkn"] = [(tracks, total)]
-                    except KeyError:
-                        pass
-                tags.save(file)
+def get_cover(info):
+    cover_url = None
+    for thumb in info["thumbnails"]:
+        if thumb["width"] >= 500:
+            cover_url = thumb["url"]
+            break
+
+    if cover_url is None:
+        cover_url = info["thumbnails"][-1]["url"]
+
+    return urllib.request.urlretrieve(cover_url, "cover.jpg")
+
+
+def tag_song(entry, cover, file, tags):
+    with open(cover, "rb") as cover_file:
+        print(f"[tagging] File: {file} Title: {entry['track']}")
+
+        tags["\xa9ART"] = entry["artist"].split(",")[0]
+        tags["\xa9alb"] = entry["album"]
+        tags["\xa9nam"] = entry["track"]
+
+        if entry["release_year"] is not None:
+            tags["\xa9day"] = str(entry["release_year"])
+
+        try:
+            tags["\xa9gen"] = [entry["genre"]]  # Some songs don't have 'genre' field
+        except KeyError:
+            pass
+
+        try:  # Some songs don't have 'track_number' field
+            tracks = entry["track_number"]
+            total = entry["n_entries"]
+            tags["trkn"] = [(tracks, total)]
+        except KeyError:
+            try:
+                tracks = entry["playlist_index"]
+                total = entry["n_entries"]
+                tags["trkn"] = [(tracks, total)]
+            except KeyError:
+                pass
+
+        tags["covr"] = [MP4Cover(cover_file.read(), imageformat=MP4Cover.FORMAT_JPEG)]
+        tags.save(file)
 
 
 if __name__ == "__main__":
