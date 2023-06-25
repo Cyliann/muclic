@@ -40,5 +40,4 @@ pip install yt-dlp ytmusicapi pytaglib
 
 ## To do
 
-- Auto ID3 tagging
 - In-line command options
