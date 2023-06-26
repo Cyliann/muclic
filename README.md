@@ -40,4 +40,4 @@ pip install yt-dlp ytmusicapi pytaglib
 
 ## To do
 
-- In-line command options
+- Single song support

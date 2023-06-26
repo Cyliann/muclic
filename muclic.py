@@ -5,6 +5,7 @@ from yt_dlp import YoutubeDL
 import fnmatch
 import sys
 import urllib.request
+import argparse
 
 try:
     from mutagen.mp4 import MP4, MP4Cover
@@ -23,14 +24,45 @@ class Record:
 
 
 def main():
-    query = input("\033[1m\033[95mSearch: \033[0m")
     yt = YTMusic()
-    search_results = yt.search(query, filter="albums")
-    download_data = get_albums(search_results, yt)
+
+    args = parse_args()
+    search_results = search(yt, args.query, False)
+    download_data = get_data(search_results, yt, args.dir)
     download(download_data)
 
 
-def get_albums(search_results, yt):
+def parse_args():
+    # Initialize parser
+    parser = argparse.ArgumentParser(
+        prog="muclic", description="A CLI for downloading music"
+    )
+
+    # Add arguments
+    parser.add_argument("query", help="Album/song name", nargs="?")
+    # parser.add_argument(
+    #     "-s", "--song", help="Download a single song", action="store_true"
+    # )
+    parser.add_argument(
+        "-d", "--dir", help="Specify output direcory", default="~/Music"
+    )
+    parser.add_argument("-T", "--no-tag", help="Don't tag songs", action="store_true")
+
+    # Read arguments from command line
+    args = parser.parse_args()
+
+    return args
+
+
+def search(yt, query, if_song):
+    if query is None:
+        query = input("\033[1m\033[95mSearch: \033[0m")
+
+    filter = "songs" if if_song else "albums"
+    return yt.search(query, filter=filter)
+
+
+def get_data(search_results, yt, dir):
     """
     :param: search_results: List of albums found in YouTube Music database
     :return: List of data necessary to download album (urls, path, album name, artist name)
@@ -76,7 +108,7 @@ def get_albums(search_results, yt):
             "https://music.youtube.com/playlist?list="
             + yt.get_album(album_id)["audioPlaylistId"]
         )
-        path = os.path.expanduser(f"~/Music/{artist}/{album_title}")
+        path = os.path.expanduser(f"{dir}/{artist}/{album_title}")
 
         record = Record(album_title, artist, path, url)
 
