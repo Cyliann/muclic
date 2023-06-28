@@ -37,7 +37,3 @@ pip install yt-dlp ytmusicapi pytaglib
 2.  Enter the name of the album/artist/song.
 3.  Choose a number/multiple numbers to select which album you want to download.
 4.  Rest.
-
-## To do
-
-- Single song support
