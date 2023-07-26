@@ -24,7 +24,10 @@ class Item:
 
 
 def main():
-    yt = YTMusic()
+    try:
+        yt = YTMusic()
+    except:
+        exit("That didn't work. Check your internet connection")
 
     args = parse_args()
     is_song = args.song
@@ -45,7 +48,7 @@ def main():
             tag_song(info, cover, item.path)
             os.remove(cover)
         else:
-            tagging(info, item.dir)
+            tagging(info, item.path)
 
 
 def parse_args():
@@ -55,7 +58,7 @@ def parse_args():
     )
 
     # Add arguments
-    parser.add_argument("query", help="Album/song name", nargs="*")
+    parser.add_argument("query", help="Album/song name", nargs="*", default="")
     parser.add_argument(
         "-s", "--song", help="Download a single song", action="store_true"
     )
@@ -73,7 +76,7 @@ def parse_args():
 
 
 def search(yt, query, is_song):
-    if query is None:
+    if query.strip() == "":
         query = input("\033[1m\033[95mSearch: \033[0m")
 
     filter = "songs" if is_song else "albums"
