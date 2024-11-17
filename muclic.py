@@ -92,6 +92,8 @@ class MediaItem(ABC):
         assert self.info is not None
         cover_url = None
         for thumb in self.info["thumbnails"]:
+            if "width" not in thumb:
+                continue
             if thumb["width"] >= 500:
                 cover_url = thumb["url"]
                 break
@@ -122,8 +124,6 @@ class Song(MediaItem):
 
         ydl_opts = {
             "format": "m4a/bestaudio",
-            "forcejson": True,
-            "dump_single_json": True,
             "outtmpl": {
                 "default": f"{self.artist} - %(title)s.%(ext)s",
             },
