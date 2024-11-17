@@ -7,8 +7,8 @@ This little Python script downloads music albums from YTMusic.
 ### Linux
 
 ```sh
-sudo curl -sL https://github.com/Cyliann/muclic/raw/main/muclic.py -o /usr/bin/muclic &&
-sudo chmod +x /usr/bin/muclic
+curl -sL https://github.com/Cyliann/muclic/raw/main/muclic.py &&
+chmod +x muclic.py
 ```
 
 ### Windows
@@ -18,22 +18,22 @@ Download the [muclic.py](./muclic.py) and put it in your home directory.
 ## Dependencies
 
 - Python
-- [YTMusicAPI](https://github.com/sigma67/ytmusicapi)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) (youtube-dl won't work because it doesn't support output formatting)
+- [ytmusicapi](https://github.com/sigma67/ytmusicapi)
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 
 ### Optional
 
-- [pytaglib](https://github.com/supermihi/pytaglib) (for basic tagging)
+- [mutagen](https://github.com/quodlibet/mutagen) (for audio tagging)
 
-To dowload dependencies just paste this into your terminal (if you have pip installed)
+Install through pip:
 
 ```sh
-pip install yt-dlp ytmusicapi pytaglib
+pip install yt-dlp ytmusicapi mutagen
 ```
 
 ## Usage
 
-1.  Type `muclic` into your terminal. (or `python -m muclic.py` if you're a Windows user)
-2.  Enter the name of the album/artist/song.
-3.  Choose a number/multiple numbers to select which album you want to download.
-4.  Rest.
+1. Type `muclic.py` into your terminal. (or `python -m muclic.py` if you're a Windows user)
+2. Enter the name of the album|artist|song.
+3. Choose a number/multiple numbers to select which album you want to download.
+4. Press enter and enjoy the music.
