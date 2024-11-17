@@ -69,6 +69,7 @@ class AlbumInfo(TypedDict):
 class Args:
     is_song: bool
     no_tag: bool
+    dump_json: bool
     query: str
     dir: str
 
@@ -132,7 +133,7 @@ class Song(MediaItem):
         with YoutubeDL(ydl_opts) as ydl:
             self.info: SongInfo | AlbumInfo | None = cast(
                 SongInfo,
-                ydl.extract_info(self.url),  # pyright: ignore[reportIgnoreCommentWithoutRule, reportUnknownMemberType]
+                ydl.sanitize_info(ydl.extract_info(self.url)),  # pyright: ignore[reportIgnoreCommentWithoutRule, reportUnknownMemberType]
             )
 
     @override
@@ -219,7 +220,7 @@ class Album(MediaItem):
         with YoutubeDL(ydl_opts) as ydl:
             self.info: AlbumInfo | SongInfo | None = cast(
                 AlbumInfo,
-                ydl.extract_info(self.url),  # pyright: ignore[reportIgnoreCommentWithoutRule, reportUnknownMemberType]
+                ydl.sanitize_info(ydl.extract_info(self.url)),  # pyright: ignore[reportIgnoreCommentWithoutRule, reportUnknownMemberType]
             )
         self.add_songs()
 
@@ -262,10 +263,20 @@ class App:
 
         # Add switches
         _ = parser.add_argument(
-            "-s", "--song", help="Download a single song", action="store_true"
+            "-s",
+            "--song",
+            help="Download a single song",
+            action="store_true",
+            default=False,
         )
         _ = parser.add_argument(
-            "-T", "--no-tag", help="Don't tag songs", action="store_true"
+            "-T", "--no-tag", help="Don't tag songs", action="store_true", default=False
+        )
+        _ = parser.add_argument(
+            "--dump-json",
+            help="Dump a single json file with info on downloaded items. For developement use only",
+            action="store_true",
+            default=False,
         )
 
         # Read arguments from command line and cast them to Args class
@@ -276,6 +287,7 @@ class App:
         return Args(
             is_song=cast(bool, args.song),
             no_tag=cast(bool, args.no_tag),
+            dump_json=cast(bool, args.dump_json),
             query=args.query,
             dir=cast(str, args.dir),
         )
@@ -351,6 +363,12 @@ class App:
     def download_items(self) -> None:
         for item in self.items:
             item.download()
+
+        if self.args.dump_json:
+            import json
+
+            with open("info.json", "w") as f:
+                json.dump([item.info for item in self.items], f)
 
     def tag_items(self) -> None:
         for item in self.items:
