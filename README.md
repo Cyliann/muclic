@@ -7,8 +7,8 @@ This little Python script downloads music albums from YTMusic.
 ### Linux
 
 ```sh
-curl -sL https://github.com/Cyliann/muclic/raw/main/muclic.py &&
-chmod +x muclic.py
+curl -sL https://github.com/Cyliann/muclic/raw/main/muclic.py -o muclic
+chmod +x muclic
 ```
 
 ### Windows
@@ -33,7 +33,7 @@ pip install yt-dlp ytmusicapi mutagen
 
 ## Usage
 
-1. Type `muclic.py` into your terminal. (or `python -m muclic.py` if you're a Windows user)
+1. Run the `muclic` file. (or `python -m muclic` if you're a Windows user)
 2. Enter the name of the album|artist|song.
 3. Choose a number/multiple numbers to select which album you want to download.
 4. Press enter and enjoy the music.
