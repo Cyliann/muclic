@@ -4,6 +4,7 @@
 # pyright: reportUnnecessaryTypeIgnoreComment=false
 import argparse
 import fnmatch
+import logging
 import os
 import sys
 import urllib.request
@@ -65,9 +66,26 @@ class AlbumInfo(TypedDict):
     entries: list[SongInfo]
 
 
+# To comply with YoutubeDL logger
+class YtDLLogger(logging.Logger):
+    @override
+    def debug(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self,
+        msg: str,
+        *args: object,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+    ) -> None:
+        if msg.startswith("[debug] "):
+            super().debug(msg.removeprefix("[debug] "))
+        else:
+            self.info(msg)
+
+
 @dataclass
 class Args:
     is_song: bool
+    is_debug: bool
     no_tag: bool
     dump_json: bool
     query: str
@@ -84,13 +102,14 @@ class MediaItem(ABC):
     info: SongInfo | AlbumInfo | None
 
     @abstractmethod
-    def download(self) -> None: ...
+    def download(self, ytlogger: YtDLLogger) -> None: ...
 
     @abstractmethod
     def tag(self) -> None: ...
 
     def get_cover(self) -> None:
         assert self.info is not None
+        logger = logging.getLogger(__name__)
         cover_url = None
         for thumb in self.info["thumbnails"]:
             if "width" not in thumb:
@@ -103,7 +122,7 @@ class MediaItem(ABC):
             cover_url = self.info["thumbnails"][-1]["url"]
 
         cover, _ = urllib.request.urlretrieve(cover_url)
-        print(f"path of cover is {os.path.abspath(cover)}")
+        logger.debug(f"path of cover is {os.path.abspath(cover)}")
         TEMP_FILES.append(cover)
         self.cover = cover
 
@@ -114,7 +133,7 @@ class Song(MediaItem):
     song_id: str
 
     @override
-    def download(self):
+    def download(self, ytlogger: YtDLLogger):
         """
         :param item: Data necessary for download (url, path, album name, artist)
         :return: none
@@ -128,6 +147,7 @@ class Song(MediaItem):
             "outtmpl": {
                 "default": f"{self.artist} - %(title)s.%(ext)s",
             },
+            "logger": ytlogger,
         }
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -158,7 +178,8 @@ class Song(MediaItem):
 
         assert self.cover is not None
         with open(self.cover, "rb") as cover_file:
-            print(f"[tagging] File: {file} Title: {self.info['track']}")
+            logger = logging.getLogger(__name__)
+            logger.info(f"Tagging file: {file}")
 
             artist: str | list[str] = self.info["artist"]
             if isinstance(artist, str):
@@ -201,7 +222,7 @@ class Album(MediaItem):
     songs: list[Song]
 
     @override
-    def download(self) -> None:
+    def download(self, ytlogger: YtDLLogger) -> None:
         """
         :param item: Data necessary for download (url, path, album name, artist)
         :return: none
@@ -215,6 +236,7 @@ class Album(MediaItem):
             "outtmpl": {
                 "default": f"{self.artist} - %(title)s.%(ext)s",
             },
+            "logger": ytlogger,
         }
 
         with YoutubeDL(ydl_opts) as ydl:
@@ -278,6 +300,9 @@ class App:
             action="store_true",
             default=False,
         )
+        _ = parser.add_argument(
+            "--debug", help="Set log level to debug", action="store_true", default=False
+        )
 
         # Read arguments from command line and cast them to Args class
         args = parser.parse_args()
@@ -286,6 +311,7 @@ class App:
 
         return Args(
             is_song=cast(bool, args.song),
+            is_debug=cast(bool, args.debug),
             no_tag=cast(bool, args.no_tag),
             dump_json=cast(bool, args.dump_json),
             query=args.query,
@@ -360,9 +386,9 @@ class App:
                 items.append(item)
         self.items = items
 
-    def download_items(self) -> None:
+    def download_items(self, ytlogger: YtDLLogger) -> None:
         for item in self.items:
-            item.download()
+            item.download(ytlogger)
 
         if self.args.dump_json:
             import json
@@ -449,21 +475,23 @@ class MediaFactory:
         )
 
 
-def main():
+def main() -> None:
     app = App()
+    ytlogger: YtDLLogger = setup_logging(app.args.is_debug)
     search_results: list[SearchResult] = app.search()
     user_choices: list[int] = app.get_user_choices(search_results)
 
     app.create_media_items(user_choices, search_results)
-    app.download_items()
+    app.download_items(ytlogger)
 
     if app.args.no_tag:
         return
 
     if not TAG:  # missing dependencies
-        print(f"[{COLOR3}Warning{RESET_COLOR}] Module pytaglib not installed.")
-        print(f"[{COLOR3}Warning{RESET_COLOR}] Install it with 'pip install pytaglib'")
-        print(f"[{COLOR3}Warning{RESET_COLOR}] Skipping tagging")
+        logger = logging.getLogger(__name__)
+        logger.warning("Module pytaglib not installed.")
+        logger.warning("Install it with 'pip install pytaglib'")
+        logger.warning("Skipping tagging")
         return
 
     app.tag_items()
@@ -471,6 +499,27 @@ def main():
     # Cleanup
     for file in TEMP_FILES:
         os.remove(file)
+
+
+def setup_logging(debug: bool) -> YtDLLogger:
+    logger = logging.getLogger(__name__)
+    ytlogger = YtDLLogger("ytdl")
+
+    level = logging.DEBUG if debug else logging.INFO
+    logger.setLevel(level)
+    ytlogger.setLevel(level)
+
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter("[%(levelname)s] %(message)s")
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+    ytlogger.addHandler(handler)
+
+    logger.debug("Logger set up")
+    ytlogger.debug("[debug] YoutubeDL logger set up")
+
+    return ytlogger
 
 
 if __name__ == "__main__":
