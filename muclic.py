@@ -155,17 +155,16 @@ class Song(MediaItem):
         for potential_file in os.listdir(self.path):
             # Find the right file to tag
             if fnmatch.fnmatch(potential_file, f"*{self.info['track']}.*"):
-                file = potential_file
+                file = os.path.join(self.path, potential_file)
 
+        logger = logging.getLogger(__name__)
+        logger.info(f"Tagging file: {file}")
         tags = mp4.MP4(file).tags
         if tags is None:
             return
 
         assert self.cover is not None
         with open(self.cover, "rb") as cover_file:
-            logger = logging.getLogger(__name__)
-            logger.info(f"Tagging file: {file}")
-
             artist: str | list[str] = self.info["artist"]
             if isinstance(artist, str):
                 tags["\xa9ART"] = artist.split(",")[0]
