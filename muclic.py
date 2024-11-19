@@ -24,6 +24,12 @@ COLOR2: str = "\033[96m"
 COLOR3: str = "\033[93m"
 COLOR4: str = "\033[95m"
 TEMP_FILES: list[str] = []
+THUMB_RES: int = 500
+
+
+class Thumbnail(TypedDict):
+    width: int
+    url: str
 
 
 class SearchResult(TypedDict):
@@ -38,15 +44,11 @@ class SongSearchResult(SearchResult):
 
 class AlbumSearchResult(SearchResult):
     browseId: str
+    thumbnails: list[Thumbnail]
 
 
 class YTAlbumData(TypedDict):
     audioPlaylistId: str
-
-
-class Thumbnail(TypedDict):
-    width: int
-    url: str
 
 
 class SongInfo(TypedDict):
@@ -107,24 +109,7 @@ class MediaItem(ABC):
     @abstractmethod
     def tag(self) -> None: ...
 
-    def get_cover(self) -> None:
-        assert self.info is not None
-        logger = logging.getLogger(__name__)
-        cover_url = None
-        for thumb in self.info["thumbnails"]:
-            if "width" not in thumb:
-                continue
-            if thumb["width"] >= 500:
-                cover_url = thumb["url"]
-                break
-
-        if cover_url is None:
-            cover_url = self.info["thumbnails"][-1]["url"]
-
-        cover, _ = urllib.request.urlretrieve(cover_url)
-        logger.debug(f"path of cover is {os.path.abspath(cover)}")
-        TEMP_FILES.append(cover)
-        self.cover = cover
+    def get_cover(self) -> None: ...
 
 
 @dataclass
@@ -163,7 +148,7 @@ class Song(MediaItem):
         assert self.info is not None
 
         # asserting to SongInfo to silence the LSP.
-        # However TypedDicts are just dicts under the cover, so we cannon assert their type to be SongInfo, hence assert to dict
+        # However TypedDicts are just dicts under the cover, so we cannot assert their type to be SongInfo, hence assert to dict
         assert type(self.info) is SongInfo or type(self.info) is dict
 
         file = ""
@@ -215,6 +200,38 @@ class Song(MediaItem):
             tags["covr"] = [mp4.MP4Cover(cover_file.read())]
             tags.save(file)  # pyright: ignore[reportUnknownMemberType]
 
+    @override
+    def get_cover(self) -> None:
+        logger = logging.getLogger(__name__)
+        yt = YTMusic()
+        logger.debug("Searching for matching album...")
+
+        # search for an album that has a matching name and artist
+        album_search_results: AlbumSearchResult = yt.search(  # pyright: ignore[reportAssignmentType, reportUnknownMemberType]
+            query=f"{self.album_title} {self.artist}", filter="albums", limit=1
+        )[0]
+
+        assert "thumbnails" in album_search_results
+        assert isinstance(album_search_results["thumbnails"], list)
+        thumbnails: list[Thumbnail] = album_search_results["thumbnails"]
+
+        logger.debug("Found matching album")
+        cover_url = None
+        for thumb in thumbnails:
+            if "width" not in thumb:
+                continue
+            if thumb["width"] >= THUMB_RES:
+                cover_url = thumb["url"]
+                break
+
+        if cover_url is None:
+            cover_url = thumbnails[-1]["url"]
+
+        cover, _ = urllib.request.urlretrieve(cover_url)
+        logger.debug(f"Path to the cover file is {os.path.abspath(cover)}")
+        TEMP_FILES.append(cover)
+        self.cover = cover
+
 
 @dataclass
 class Album(MediaItem):
@@ -251,6 +268,26 @@ class Album(MediaItem):
         for song in self.songs:
             song.cover = self.cover
             song.tag()
+
+    @override
+    def get_cover(self) -> None:
+        assert self.info is not None
+        logger = logging.getLogger(__name__)
+        cover_url = None
+        for thumb in self.info["thumbnails"]:
+            if "width" not in thumb:
+                continue
+            if thumb["width"] >= THUMB_RES:
+                cover_url = thumb["url"]
+                break
+
+        if cover_url is None:
+            cover_url = self.info["thumbnails"][-1]["url"]
+
+        cover, _ = urllib.request.urlretrieve(cover_url)
+        logger.debug(f"path of cover is {os.path.abspath(cover)}")
+        TEMP_FILES.append(cover)
+        self.cover = cover
 
     def add_songs(self) -> None:
         assert self.info is not None
