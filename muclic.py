@@ -26,32 +26,54 @@ COLOR4: str = "\033[95m"
 TEMP_FILES: list[str] = []
 THUMB_RES: int = 500
 
-
 class Thumbnail(TypedDict):
+    """
+    Represents a thumbnail image with its width and URL pointing to it.
+    """
     width: int
     url: str
 
 
 class SearchResult(TypedDict):
+    """
+    Result of a youtubemusic search independently of the filter. 
+    Has more fields, but we care only about those.
+    """
     title: str
     artists: list[dict[str, str]]
 
 
 class SongSearchResult(SearchResult):
+    """
+    Result of a youtubemusic search with a 'songs' filter. 
+    Has more fields, but we care only about those.
+    """
     videoId: str
     album: dict[str, str]
 
 
 class AlbumSearchResult(SearchResult):
+    """
+    Result of a youtubemusic search with a 'albums' filter. 
+    Has more fields, but we care only about those.
+    """
     browseId: str
     thumbnails: list[Thumbnail]
 
 
 class YTAlbumData(TypedDict):
+    """
+    Data received from downloading album from YTMusic.
+    Has more fields, but we care only about those.
+    """
     audioPlaylistId: str
 
 
 class SongInfo(TypedDict):
+    """
+    Info dumped by YoutubeDL.
+    Has more fields, but only these are needed for tagging.
+    """
     release_year: int | None
     artist: str | list[str]
     album: str
@@ -64,12 +86,19 @@ class SongInfo(TypedDict):
 
 
 class AlbumInfo(TypedDict):
+    """
+    Info dumped by YoutubeDL.
+    Has more fields, but only these are needed for tagging.
+    """
     thumbnails: list[Thumbnail]
     entries: list[SongInfo]
 
 
 # To comply with YoutubeDL logger
 class YtDLLogger(logging.Logger):
+    """
+    Custom logger to integrate with YoutubeDL.
+    """
     @override
     def debug(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
@@ -78,6 +107,18 @@ class YtDLLogger(logging.Logger):
         stack_info: bool = False,
         stacklevel: int = 1,
     ) -> None:
+        """
+        Overrides the debug method to reformat messages from YoutubeDL.
+
+        :param msg: The message to log.
+        :type msg: str
+        :param *args: Additional arguments for logging.
+        :type *args: object
+        :param stack_info: Whether to include stack info.
+        :type stack_info: bool
+        :param stacklevel: The stack level for the log entry.
+        :type stacklevel: int
+        """
         if msg.startswith("[debug] "):
             super().debug(msg.removeprefix("[debug] "))
         else:
@@ -86,6 +127,9 @@ class YtDLLogger(logging.Logger):
 
 @dataclass
 class Args:
+    """
+    Data class representing command-line arguments.
+    """
     is_song: bool
     is_debug: bool
     no_tag: bool
@@ -96,6 +140,9 @@ class Args:
 
 @dataclass
 class MediaItem(ABC):
+    """
+    Abstract base class for media items.
+    """
     title: str
     artist: str
     path: str
@@ -114,14 +161,19 @@ class MediaItem(ABC):
 
 @dataclass
 class Song(MediaItem):
+    """
+    Class representing a single song.
+    """
     album_title: str
     song_id: str
 
     @override
     def download(self, ytlogger: YtDLLogger):
         """
-        :param item: Data necessary for download (url, path, album name, artist)
-        :return: none
+        Downloads the song and retrieves its metadata.
+
+        :param ytlogger: Instance of YtDLLogger for logging.
+        :type ytlogger: YtDLLogger
         """
 
         os.makedirs(self.path, mode=0o755, exist_ok=True)
@@ -142,14 +194,19 @@ class Song(MediaItem):
             )
 
     @override
-    def tag(self):
+    def tag(self) -> None:
+        """
+        Tags the downloaded song file with metadata, including cover image.
+        Expects self.info and self.cover to be valid.
+        """
         from mutagen import mp4
 
         assert self.info is not None
 
-        # asserting to SongInfo to silence the LSP.
-        # However TypedDicts are just dicts under the cover, so we cannot assert their type to be SongInfo, hence assert to dict
-        assert type(self.info) is SongInfo or type(self.info) is dict
+        # asserting to SongInfo to silence the LSP
+        # however TypedDicts are just dicts under the cover, so we cannot assert their type to be SongInfo, hence assert to dict
+        # that's the stupidest useless line of code I have ever written
+        assert type(self.info) is SongInfo or type(self.info) is dict, "that shouldn't be even possible"
 
         file = ""
         for potential_file in os.listdir(self.path):
@@ -202,6 +259,12 @@ class Song(MediaItem):
 
     @override
     def get_cover(self) -> None:
+        """
+        Retrieves the album cover for the song based on its album title and artist.
+
+        Gets the first thumbnail which width is greater or equal to THUMB_RES.
+        Calls yt.search() to find an album with matching title and artists and fetches its cover.
+        """
         logger = logging.getLogger(__name__)
         yt = YTMusic()
         logger.debug("Searching for matching album...")
@@ -228,6 +291,7 @@ class Song(MediaItem):
             cover_url = thumbnails[-1]["url"]
 
         cover, _ = urllib.request.urlretrieve(cover_url)
+        assert isinstance(cover, str)
         logger.debug(f"Path to the cover file is {os.path.abspath(cover)}")
         TEMP_FILES.append(cover)
         self.cover = cover
@@ -235,14 +299,19 @@ class Song(MediaItem):
 
 @dataclass
 class Album(MediaItem):
+    """
+    Class representing an album.
+    """
     album_id: str
     songs: list[Song]
 
     @override
     def download(self, ytlogger: YtDLLogger) -> None:
         """
-        :param item: Data necessary for download (url, path, album name, artist)
-        :return: none
+        Downloads the album and retrieves its metadata.
+
+        :param ytlogger: Instance of YtDLLogger for logging.
+        :type ytlogger: YtDLLogger
         """
 
         os.makedirs(self.path, mode=0o755, exist_ok=True)
@@ -265,12 +334,21 @@ class Album(MediaItem):
 
     @override
     def tag(self) -> None:
+        """
+        Tags the downloaded album file with metadata, including cover image.
+        Expects self.info and self.cover to be valid.
+        """
         for song in self.songs:
             song.cover = self.cover
             song.tag()
 
     @override
     def get_cover(self) -> None:
+        """
+        Retrieves the album cover.
+
+        Gets the first thumbnail which width is greater or equal to THUMB_RES.
+        """
         assert self.info is not None
         logger = logging.getLogger(__name__)
         cover_url = None
@@ -290,6 +368,9 @@ class Album(MediaItem):
         self.cover = cover
 
     def add_songs(self) -> None:
+        """
+        Populates self.songs with songs based on self.info
+        """
         assert self.info is not None
         assert "entries" in self.info
 
@@ -301,12 +382,20 @@ class Album(MediaItem):
 
 
 class App:
+    """
+    Main application class for the CLI.
+    """
     def __init__(self) -> None:
         self.args: Args = self.parse_args()
         self.yt: YTMusic | None = None
         self.items: list[MediaItem] = []
 
     def parse_args(self) -> Args:
+        """
+        Parses command-line arguments.
+
+        :returns: Parsed arguments as an instance of Args.
+        """
         # Initialize parser
         parser = argparse.ArgumentParser(
             prog="muclic", description="A CLI for downloading music", exit_on_error=True
@@ -356,6 +445,13 @@ class App:
         )
 
     def search(self) -> list[SearchResult]:
+        """
+        Searches for media based on provided query.
+
+        Query is either in self.args.query or if not provided, user is asked directly.
+
+        :returns: List of search results as a list of SearchResult 
+        """
         try:
             self.yt = YTMusic()
         except ReadTimeoutError:
@@ -369,7 +465,11 @@ class App:
 
     def get_user_choices(self, search_results: list[SearchResult]) -> list[int]:
         """
-        :param: search_results: List of albums found in YouTube Music database
+        Handles printing search results, asking the user for input and parsing it to return a list of user's picks.
+
+        :param: search_results: List of search results
+        :type search_results: list[SearchResult]
+
         :return: choices: List of integers representing items chosen by the user
         """
         for index, result in enumerate(search_results):
@@ -404,6 +504,14 @@ class App:
     def create_media_items(
         self, user_choices: list[int], search_results: list[SearchResult]
     ) -> None:
+        """
+        Creates media objects based on search results and user picks.
+
+        :param user_choices: list of user's picks from the search result list
+        :type user_choices: list[int]
+        :param search_results: list of search results returned by search()
+        :type search_results: list[SearchResult]
+        """
         assert self.yt is not None  # just to silence the LSP
 
         items: list[MediaItem] = []
@@ -424,6 +532,12 @@ class App:
         self.items = items
 
     def download_items(self, ytlogger: YtDLLogger) -> None:
+        """
+        Downloads all items contained in self.items.
+
+        :param ytlogger: Logger to pass to YoutubeDL
+        :type ytlogger: YtDLLLogger
+        """
         for item in self.items:
             item.download(ytlogger)
 
@@ -434,13 +548,27 @@ class App:
                 json.dump([item.info for item in self.items], f)
 
     def tag_items(self) -> None:
+        """
+        Tags all items contained in self.items.
+        """
         for item in self.items:
             item.get_cover()
             item.tag()
 
 
 class MediaFactory:
+    """
+    Factory class that handles creation of MediaItem objects.
+    """
     def createSongFromSearch(self, data: SearchResult, dir: str) -> Song:
+        """
+        Creates a Song object based on data from SearchResult.
+
+        :param data: Data contained in a search result
+        :type data: SearchResult
+        :param dir: Path to the output directory
+        :type dir: str
+        """
         data: SongSearchResult = cast(SongSearchResult, data)
         title: str = data["title"]
 
@@ -467,6 +595,14 @@ class MediaFactory:
         )
 
     def createSongFromSongInfo(self, data: SongInfo, path: str) -> Song:
+        """
+        Creates a Song object based on data from SongInfo.
+
+        :param data: Data contained in album's 'entries' field
+        :type data: SongInfo
+        :param path: Path to the album directory ({output directory}/{album_name})
+        :type path: str
+        """
         title: str = data["track"]
         artist: str = data["artist"][0]
         album_title: str = data["album"]
@@ -484,6 +620,16 @@ class MediaFactory:
         )
 
     def createAlbum(self, data: SearchResult, dir: str, yt: YTMusic) -> Album:
+        """
+        Creates an Album object based on data from a search result.
+
+        :param data: Data contained in a search result
+        :type data: SearchResult
+        :param dir: Path to the output directory
+        :type dir: str
+        :param yt: Instance of YTMusic, needed to find album's id
+        :type yt: YTMusic
+        """
         data: AlbumSearchResult = cast(AlbumSearchResult, data)
         title: str = data["title"]
 
@@ -539,6 +685,14 @@ def main() -> None:
 
 
 def setup_logging(debug: bool) -> YtDLLogger:
+    """
+    Creates logger objects.
+
+    :param debug: If loggers should use debug level
+    :type debug: bool
+
+    :return: An instance of YtDLLLogger to pass to YoutubeDL
+    """
     logger = logging.getLogger(__name__)
     ytlogger = YtDLLogger("ytdl")
 
