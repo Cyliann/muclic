@@ -8,10 +8,13 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-youtubemusicapi = "^2.9.1"
 yt-dlp = "^2024.11.18"
 requests = "^2.32.3"
+mutagen = "^1.47.0"
+ytmusicapi = "^1.8.2"
 
+[tool.poetry.scripts]
+muclic = "muclic:main"
 
 [build-system]
 requires = ["poetry-core"]

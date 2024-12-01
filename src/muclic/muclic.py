@@ -26,37 +26,42 @@ COLOR4: str = "\033[95m"
 TEMP_FILES: list[str] = []
 THUMB_RES: int = 500
 
+
 class Thumbnail(TypedDict):
     """
     Represents a thumbnail image with its width and URL pointing to it.
     """
+
     width: int
     url: str
 
 
 class SearchResult(TypedDict):
     """
-    Result of a youtubemusic search independently of the filter. 
+    Result of a youtubemusic search independently of the filter.
     Has more fields, but we care only about those.
     """
+
     title: str
     artists: list[dict[str, str]]
 
 
 class SongSearchResult(SearchResult):
     """
-    Result of a youtubemusic search with a 'songs' filter. 
+    Result of a youtubemusic search with a 'songs' filter.
     Has more fields, but we care only about those.
     """
+
     videoId: str
     album: dict[str, str]
 
 
 class AlbumSearchResult(SearchResult):
     """
-    Result of a youtubemusic search with a 'albums' filter. 
+    Result of a youtubemusic search with a 'albums' filter.
     Has more fields, but we care only about those.
     """
+
     browseId: str
     thumbnails: list[Thumbnail]
 
@@ -66,6 +71,7 @@ class YTAlbumData(TypedDict):
     Data received from downloading album from YTMusic.
     Has more fields, but we care only about those.
     """
+
     audioPlaylistId: str
 
 
@@ -74,6 +80,7 @@ class SongInfo(TypedDict):
     Info dumped by YoutubeDL.
     Has more fields, but only these are needed for tagging.
     """
+
     release_year: int | None
     artist: str | list[str]
     album: str
@@ -90,6 +97,7 @@ class AlbumInfo(TypedDict):
     Info dumped by YoutubeDL.
     Has more fields, but only these are needed for tagging.
     """
+
     thumbnails: list[Thumbnail]
     entries: list[SongInfo]
 
@@ -99,6 +107,7 @@ class YtDLLogger(logging.Logger):
     """
     Custom logger to integrate with YoutubeDL.
     """
+
     @override
     def debug(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,
@@ -130,6 +139,7 @@ class Args:
     """
     Data class representing command-line arguments.
     """
+
     is_song: bool
     is_debug: bool
     no_tag: bool
@@ -143,6 +153,7 @@ class MediaItem(ABC):
     """
     Abstract base class for media items.
     """
+
     title: str
     artist: str
     path: str
@@ -164,6 +175,7 @@ class Song(MediaItem):
     """
     Class representing a single song.
     """
+
     album_title: str
     song_id: str
 
@@ -206,7 +218,9 @@ class Song(MediaItem):
         # asserting to SongInfo to silence the LSP
         # however TypedDicts are just dicts under the cover, so we cannot assert their type to be SongInfo, hence assert to dict
         # that's the stupidest useless line of code I have ever written
-        assert type(self.info) is SongInfo or type(self.info) is dict, "that shouldn't be even possible"
+        assert (
+            type(self.info) is SongInfo or type(self.info) is dict
+        ), "that shouldn't be even possible"
 
         file = ""
         for potential_file in os.listdir(self.path):
@@ -301,6 +315,7 @@ class Album(MediaItem):
     """
     Class representing an album.
     """
+
     album_id: str
     songs: list[Song]
 
@@ -384,6 +399,7 @@ class App:
     """
     Main application class for the CLI.
     """
+
     def __init__(self) -> None:
         self.args: Args = self.parse_args()
         self.yt: YTMusic | None = None
@@ -449,7 +465,7 @@ class App:
 
         Query is either in self.args.query or if not provided, user is asked directly.
 
-        :returns: List of search results as a list of SearchResult 
+        :returns: List of search results as a list of SearchResult
         """
         try:
             self.yt = YTMusic()
@@ -559,6 +575,7 @@ class MediaFactory:
     """
     Factory class that handles creation of MediaItem objects.
     """
+
     def createSongFromSearch(self, data: SearchResult, dir: str) -> Song:
         """
         Creates a Song object based on data from SearchResult.
