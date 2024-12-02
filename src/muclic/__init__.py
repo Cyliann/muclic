@@ -1,1 +1,0 @@
-from .muclic import main
