@@ -13,29 +13,32 @@ TAG = "mutagen" in sys.modules  # check if mutagen is installed
 
 
 def main() -> None:
-    app = App()
-    ytlogger: logs.YtDLLogger = logs.setup_logging(app.args.is_debug)
-    search_results: list[SearchResult] = app.search()
-    user_choices: list[int] = app.get_user_choices(search_results)
+    try:
+        app = App()
+        ytlogger: logs.YtDLLogger = logs.setup_logging(app.args.is_debug)
+        search_results: list[SearchResult] = app.search()
+        user_choices: list[int] = app.get_user_choices(search_results)
 
-    app.create_media_items(user_choices, search_results)
-    app.download_items(ytlogger)
+        app.create_media_items(user_choices, search_results)
+        app.download_items(ytlogger)
 
-    if app.args.no_tag:
-        return
+        if app.args.no_tag:
+            return
 
-    if not TAG:  # missing dependencies
-        logger = logging.getLogger(__name__)
-        logger.warning("Module pytaglib not installed.")
-        logger.warning("Install it with 'pip install pytaglib'")
-        logger.warning("Skipping tagging")
-        return
+        if not TAG:  # missing dependencies
+            logger = logging.getLogger(__name__)
+            logger.warning("Module pytaglib not installed.")
+            logger.warning("Install it with 'pip install pytaglib'")
+            logger.warning("Skipping tagging")
+            return
 
-    temp_files = app.tag_items()
+        temp_files = app.tag_items()
 
-    # Cleanup
-    for file in temp_files:
-        os.remove(file)
+        # Cleanup
+        for file in temp_files:
+            os.remove(file)
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 
 if __name__ == "__main__":
