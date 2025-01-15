@@ -1,3 +1,1 @@
-from .__main__ import main
-
-main()
+from muclic.__main__ import main
