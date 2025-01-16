@@ -7,7 +7,7 @@ import sys
 
 import muclic.logging as logs
 from muclic.app import App
-from muclic.typing import SearchResult
+from muclic.helper_types import SearchResult
 
 TAG = "mutagen" in sys.modules  # check if mutagen is installed
 

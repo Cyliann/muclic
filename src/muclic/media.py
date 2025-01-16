@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from muclic.logging import YtDLLogger
-from muclic.typing import AlbumInfo, SongInfo
+from muclic.helper_types import AlbumInfo, SongInfo
 
 
 @dataclass

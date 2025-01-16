@@ -11,7 +11,7 @@ from ytmusicapi import YTMusic
 
 from muclic.logging import YtDLLogger
 from muclic.media import MediaItem
-from muclic.typing import (
+from muclic.helper_types import (
     AlbumInfo,
     AlbumSearchResult,
     SearchResult,
@@ -71,9 +71,9 @@ class Song(MediaItem):
         # asserting to SongInfo to silence the LSP
         # however TypedDicts are just dicts under the cover, so we cannot assert their type to be SongInfo, hence assert to dict
         # that's the stupidest useless line of code I have ever written
-        assert (
-            type(self.info) is SongInfo or type(self.info) is dict
-        ), "that shouldn't be even possible"
+        assert type(self.info) is SongInfo or type(self.info) is dict, (
+            "that shouldn't be even possible"
+        )
 
         file = ""
         for potential_file in os.listdir(self.path):

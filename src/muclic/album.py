@@ -11,7 +11,7 @@ from ytmusicapi import YTMusic
 from muclic.logging import YtDLLogger
 from muclic.media import MediaItem
 from muclic.song import Song, SongFactory
-from muclic.typing import (
+from muclic.helper_types import (
     AlbumInfo,
     AlbumSearchResult,
     SearchResult,

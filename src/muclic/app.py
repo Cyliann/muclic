@@ -9,7 +9,7 @@ from muclic.album import AlbumFactory
 from muclic.logging import YtDLLogger
 from muclic.media import MediaItem
 from muclic.song import SongFactory
-from muclic.typing import SearchResult
+from muclic.helper_types import SearchResult
 
 RESET_COLOR: str = "\033[0m"
 BOLD: str = "\033[1m"
