@@ -5,12 +5,10 @@ import urllib.request
 from dataclasses import dataclass
 from typing import cast, override
 
+import azapi
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
-from muclic.logging import YtDLLogger
-from muclic.media import MediaItem
-from muclic.song import Song, SongFactory
 from muclic.helper_types import (
     AlbumInfo,
     AlbumSearchResult,
@@ -18,6 +16,9 @@ from muclic.helper_types import (
     SongInfo,
     YTAlbumData,
 )
+from muclic.logging import YtDLLogger
+from muclic.media import MediaItem
+from muclic.song import Song, SongFactory
 
 THUMB_RES: int = 500
 
@@ -57,6 +58,11 @@ class Album(MediaItem):
                 ydl.sanitize_info(ydl.extract_info(self.url)),  # pyright: ignore[reportUnknownMemberType]
             )
         self.add_songs()
+
+    @override
+    def download_lyrics(self, azl: azapi.AZlyrics) -> None:
+        for song in self.songs:
+            song.download_lyrics(azl)
 
     @override
     def tag(self) -> None:

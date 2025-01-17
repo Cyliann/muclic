@@ -5,6 +5,7 @@ import os
 import urllib.request
 from dataclasses import dataclass
 from typing import cast, override
+import azapi
 
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
@@ -31,6 +32,7 @@ class Song(MediaItem):
 
     album_title: str
     song_id: str
+    lyrics: str = ""
 
     @override
     def download(self, ytlogger: YtDLLogger):
@@ -57,6 +59,13 @@ class Song(MediaItem):
                 SongInfo,
                 ydl.sanitize_info(ydl.extract_info(self.url)),  # pyright: ignore[reportUnknownMemberType]
             )
+
+    @override
+    def download_lyrics(self, azl: azapi.AZlyrics) -> None:
+        azl.artist = self.artist
+        azl.title = self.title
+        _ = azl.getLyrics()  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+        self.lyrics = azl.lyrics
 
     @override
     def tag(self) -> None:
@@ -121,6 +130,7 @@ class Song(MediaItem):
                     pass
 
             tags["covr"] = [mp4.MP4Cover(cover_file.read())]
+            tags["\xa9lyr"] = self.lyrics
             tags.save(file)  # pyright: ignore[reportUnknownMemberType]
 
     @override

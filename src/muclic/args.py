@@ -12,9 +12,11 @@ class Args:
     is_song: bool
     is_debug: bool
     no_tag: bool
+    lyrics: bool
     dump_json: bool
     query: str
     dir: str
+
 
 def parse_args() -> Args:
     """
@@ -47,6 +49,9 @@ def parse_args() -> Args:
         "-T", "--no-tag", help="Don't tag songs", action="store_true", default=False
     )
     _ = parser.add_argument(
+        "-l", "--lyrics", help="Download lyrics", action="store_true", default=False
+    )
+    _ = parser.add_argument(
         "--dump-json",
         help="Dump a single json file with info on downloaded items. For developement use only",
         action="store_true",
@@ -65,6 +70,7 @@ def parse_args() -> Args:
         is_song=cast(bool, args.song),
         is_debug=cast(bool, args.debug),
         no_tag=cast(bool, args.no_tag),
+        lyrics=cast(bool, args.lyrics),
         dump_json=cast(bool, args.dump_json),
         query=args.query,
         dir=cast(str, args.dir),

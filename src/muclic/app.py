@@ -1,4 +1,6 @@
 # pyright: reportRedeclaration=none, reportMissingTypeStubs=none
+import logging
+import sys
 from typing import cast
 
 from requests.models import ReadTimeoutError
@@ -133,11 +135,43 @@ class App:
             with open("info.json", "w") as f:
                 json.dump([item.info for item in self.items], f)
 
+    def download_lyrics(self) -> None:
+        """
+        Downloads lyrics for all items contained in self.items.
+        """
+        if not self.args.lyrics:
+            return
+
+        if "azapi" not in sys.modules:  # missing dependencies
+            logger = logging.getLogger(__name__)
+            logger.warning("Module azapi not installed.")
+            logger.warning("Install it with 'pip install azapi'")
+            logger.warning("Skipping downloading lyrics")
+            return
+
+        import azapi
+
+        azl = azapi.AZlyrics()
+
+        for item in self.items:
+            item.download_lyrics(azl)
+
     def tag_items(self) -> list[str]:
         """
         Tags all items contained in self.items.
         """
         temp_files: list[str] = []
+
+        if self.args.no_tag:
+            return temp_files
+
+        if "mutagen" not in sys.modules:  # missing dependencies
+            logger = logging.getLogger(__name__)
+            logger.warning("Module mutagen not installed.")
+            logger.warning("Install it with 'pip install mutagen'")
+            logger.warning("Skipping tagging")
+            return temp_files
+
         for item in self.items:
             item.get_cover(temp_files)
             item.tag()
