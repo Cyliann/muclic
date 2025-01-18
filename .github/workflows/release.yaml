@@ -81,7 +81,7 @@ jobs:
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: Bumping version to ${{ needs.details.outputs.new_version }}
-          branch: bump-version-${{ needs.details.outputs.new_version }}
+          branch: main
           file_pattern: "pyproject.toml"
           skip_dirty_check: true
 
