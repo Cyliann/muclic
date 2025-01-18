@@ -25,6 +25,7 @@ options:
   -d DIR, --dir DIR  Specify output direcory
   -s, --song         Download a single song
   -T, --no-tag       Don't tag songs
+  -l, --lyrics   Download lyrics
   --dump-json        Dump a single json file with info on downloaded items. For developement use only
   --debug            Set log level to debug
 ```
