@@ -2,16 +2,15 @@
 import fnmatch
 import logging
 import os
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import cast, override
-import azapi
 
+import requests
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
-from muclic.logging import YtDLLogger
-from muclic.media import MediaItem
 from muclic.helper_types import (
     AlbumInfo,
     AlbumSearchResult,
@@ -20,6 +19,8 @@ from muclic.helper_types import (
     SongSearchResult,
     Thumbnail,
 )
+from muclic.logging import YtDLLogger
+from muclic.media import MediaItem
 
 THUMB_RES: int = 500
 
@@ -61,11 +62,38 @@ class Song(MediaItem):
             )
 
     @override
-    def download_lyrics(self, azl: azapi.AZlyrics) -> None:
-        azl.artist = self.artist
-        azl.title = self.title
-        _ = azl.getLyrics()  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
-        self.lyrics = azl.lyrics
+    def download_lyrics(self) -> None:
+        logger = logging.getLogger(__name__)
+        logger.info(f"Downloading lyrics for {self.artist} - {self.title}")
+        url = f"https://some-random-api.com/lyrics?title={urllib.parse.quote_plus(self.artist)}+{urllib.parse.quote_plus(self.title)}"
+        response = requests.get(url)
+
+        match response.status_code:
+            case 200:
+                logger.info("Found lyrics.")
+                pass
+            case 404:
+                logger.warning("Couldn't find song lyrics.")
+                return
+            case 429:
+                logger.warning("Too many requests. Wait a minute and try again.")
+                return
+            case _:
+                logger.warning("Something went wrong with fetching the lyrics.")
+                return
+
+        try:
+            data = response.json()  # pyright: ignore[reportAny]
+            assert isinstance(data, dict)
+
+            self.lyrics = data["lyrics"]
+
+        except requests.exceptions.JSONDecodeError:
+            logger.error(
+                "Couldn't parse json. If this keeps happening create an issue on github."
+            )
+
+        return
 
     @override
     def tag(self) -> None:

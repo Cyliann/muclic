@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
-import azapi  # pyright: ignore[reportMissingTypeStubs]
-
 from muclic.helper_types import AlbumInfo, SongInfo
 from muclic.logging import YtDLLogger
 
@@ -24,7 +22,7 @@ class MediaItem(ABC):
     def download(self, ytlogger: YtDLLogger) -> None: ...
 
     @abstractmethod
-    def download_lyrics(self, azl: azapi.AZlyrics) -> None: ...
+    def download_lyrics(self) -> None: ...
 
     @abstractmethod
     def tag(self) -> None: ...

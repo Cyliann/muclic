@@ -5,7 +5,6 @@ import urllib.request
 from dataclasses import dataclass
 from typing import cast, override
 
-import azapi
 from yt_dlp import YoutubeDL
 from ytmusicapi import YTMusic
 
@@ -60,9 +59,9 @@ class Album(MediaItem):
         self.add_songs()
 
     @override
-    def download_lyrics(self, azl: azapi.AZlyrics) -> None:
+    def download_lyrics(self) -> None:
         for song in self.songs:
-            song.download_lyrics(azl)
+            song.download_lyrics()
 
     @override
     def tag(self) -> None:

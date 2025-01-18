@@ -142,19 +142,8 @@ class App:
         if not self.args.lyrics:
             return
 
-        if "azapi" not in sys.modules:  # missing dependencies
-            logger = logging.getLogger(__name__)
-            logger.warning("Module azapi not installed.")
-            logger.warning("Install it with 'pip install azapi'")
-            logger.warning("Skipping downloading lyrics")
-            return
-
-        import azapi
-
-        azl = azapi.AZlyrics()
-
         for item in self.items:
-            item.download_lyrics(azl)
+            item.download_lyrics()
 
     def tag_items(self) -> list[str]:
         """
