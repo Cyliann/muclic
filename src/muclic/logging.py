@@ -43,7 +43,7 @@ def setup_logging(debug: bool) -> YtDLLogger:
 
     :return: An instance of YtDLLLogger to pass to YoutubeDL
     """
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger()
     ytlogger = YtDLLogger("ytdl")
 
     level = logging.DEBUG if debug else logging.INFO
@@ -59,5 +59,6 @@ def setup_logging(debug: bool) -> YtDLLogger:
 
     logger.debug("Logger set up")
     ytlogger.debug("[debug] YoutubeDL logger set up")
+    # [debug] cause it differentiates by prefix
 
     return ytlogger

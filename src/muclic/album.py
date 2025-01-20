@@ -81,7 +81,7 @@ class Album(MediaItem):
         Gets the first thumbnail which width is greater or equal to THUMB_RES.
         """
         assert self.info is not None
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger()
         cover_url = None
         for thumb in self.info["thumbnails"]:
             if "width" not in thumb:

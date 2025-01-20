@@ -155,7 +155,7 @@ class App:
             return temp_files
 
         if "mutagen" not in sys.modules:  # missing dependencies
-            logger = logging.getLogger(__name__)
+            logger = logging.getLogger()
             logger.warning("Module mutagen not installed.")
             logger.warning("Install it with 'pip install mutagen' or run with -T flag.")
             logger.warning("Skipping tagging.")

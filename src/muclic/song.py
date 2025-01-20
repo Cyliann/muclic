@@ -63,7 +63,7 @@ class Song(MediaItem):
 
     @override
     def download_lyrics(self) -> None:
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger()
         logger.info(f"Downloading lyrics for {self.artist} - {self.title}")
         url = f"https://some-random-api.com/lyrics?title={urllib.parse.quote_plus(self.artist)}+{urllib.parse.quote_plus(self.title)}"
         response = requests.get(url)
@@ -118,7 +118,7 @@ class Song(MediaItem):
             if fnmatch.fnmatch(potential_file, f"*{self.info['track']}.*"):
                 file = os.path.join(self.path, potential_file)
 
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger()
         logger.info(f"Tagging file: {file}")
         tags = mp4.MP4(file).tags
         if tags is None:
@@ -169,7 +169,7 @@ class Song(MediaItem):
         Gets the first thumbnail which width is greater or equal to THUMB_RES.
         Calls yt.search() to find an album with matching title and artists and fetches its cover.
         """
-        logger = logging.getLogger(__name__)
+        logger = logging.getLogger()
         yt = YTMusic()
         logger.debug("Searching for matching album...")
 
