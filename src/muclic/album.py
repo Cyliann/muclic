@@ -130,6 +130,7 @@ class AlbumFactory:
         """
         data: AlbumSearchResult = cast(AlbumSearchResult, data)
         title: str = data["title"]
+        logger = logging.getLogger()
 
         try:
             artist: str = data["artists"][1]["name"]
@@ -137,9 +138,15 @@ class AlbumFactory:
             artist: str = data["artists"][0]["name"]
 
         browse_id: str = data["browseId"]
-        album_id: str = cast(YTAlbumData, cast(object, yt.get_album(browse_id)))[  # pyright: ignore[reportUnknownMemberType]
-            "audioPlaylistId"
-        ]
+        logger.debug(f"Browse ID: {browse_id}")
+
+        album = cast(YTAlbumData, cast(object, yt.get_album(browse_id)))  # pyright: ignore[reportUnknownMemberType]
+        album_id: str | None = album["audioPlaylistId"]
+
+        if album_id is None:
+            album_id = album["other_versions"][0]["audioPlaylistId"]
+
+        logger.debug(f"Album ID: {album_id}")
 
         url: str = f"https://music.youtube.com/playlist?list={album_id}"
         path: str = os.path.expanduser(f"{dir}/{artist}/{title}")

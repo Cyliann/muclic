@@ -47,6 +47,7 @@ class YTAlbumData(TypedDict):
     """
 
     audioPlaylistId: str
+    other_versions: list[dict[str, str]]
 
 
 class SongInfo(TypedDict):
