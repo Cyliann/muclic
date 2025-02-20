@@ -6,14 +6,12 @@ from dataclasses import dataclass
 from typing import cast, override
 
 from yt_dlp import YoutubeDL
-from ytmusicapi import YTMusic
 
 from muclic.helper_types import (
     AlbumInfo,
     AlbumSearchResult,
     SearchResult,
     SongInfo,
-    YTAlbumData,
 )
 from muclic.logging import YtDLLogger
 from muclic.media import MediaItem
@@ -117,7 +115,7 @@ class AlbumFactory:
     Factory class that handles creation of Album objects.
     """
 
-    def createAlbum(self, data: SearchResult, dir: str, yt: YTMusic) -> Album:  # noqa: F821
+    def createAlbum(self, data: SearchResult, dir: str) -> Album:  # noqa: F821
         """
         Creates an Album object based on data from a search result.
 
@@ -140,11 +138,7 @@ class AlbumFactory:
         browse_id: str = data["browseId"]
         logger.debug(f"Browse ID: {browse_id}")
 
-        album = cast(YTAlbumData, cast(object, yt.get_album(browse_id)))  # pyright: ignore[reportUnknownMemberType]
-        album_id: str | None = album["audioPlaylistId"]
-
-        if album_id is None:
-            album_id = album["other_versions"][0]["audioPlaylistId"]
+        album_id = data["playlistId"]
 
         logger.debug(f"Album ID: {album_id}")
 

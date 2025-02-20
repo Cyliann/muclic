@@ -18,6 +18,7 @@ class SearchResult(TypedDict):
 
     title: str
     artists: list[dict[str, str]]
+    playlistId: str
 
 
 class SongSearchResult(SearchResult):
@@ -38,16 +39,6 @@ class AlbumSearchResult(SearchResult):
 
     browseId: str
     thumbnails: list[Thumbnail]
-
-
-class YTAlbumData(TypedDict):
-    """
-    Data received from downloading album from YTMusic.
-    Has more fields, but we care only about those.
-    """
-
-    audioPlaylistId: str
-    other_versions: list[dict[str, str]]
 
 
 class SongInfo(TypedDict):

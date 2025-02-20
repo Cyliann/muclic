@@ -1,6 +1,7 @@
 # pyright: reportRedeclaration=none, reportMissingTypeStubs=none
 import logging
 import sys
+import json
 from typing import cast
 
 from requests.models import ReadTimeoutError
@@ -48,7 +49,14 @@ class App:
             self.args.query = input(f"{BOLD}{COLOR4}Search: {RESET_COLOR}")
 
         filter = "songs" if self.args.is_song else "albums"
-        return cast(list[SearchResult], self.yt.search(self.args.query, filter=filter))  # pyright: ignore[reportUnknownMemberType]
+
+        results = self.yt.search(self.args.query, filter=filter)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
+
+        if self.args.is_debug:
+            with open("results.json", "w") as f:
+                json.dump(results, f)
+
+        return cast(list[SearchResult], results)
 
     def get_user_choices(self, search_results: list[SearchResult]) -> list[int]:
         """
@@ -114,7 +122,7 @@ class App:
         else:
             for choice in user_choices:
                 item: MediaItem = af.createAlbum(
-                    search_results[choice - 1], self.args.dir, self.yt
+                    search_results[choice - 1], self.args.dir
                 )
                 items.append(item)
         self.items = items
