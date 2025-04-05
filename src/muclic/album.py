@@ -92,7 +92,7 @@ class Album(MediaItem):
             cover_url = self.info["thumbnails"][-1]["url"]
 
         cover, _ = urllib.request.urlretrieve(cover_url)
-        logger.debug(f"path of cover is {os.path.abspath(cover)}")
+        logger.debug(f"path to the cover is {os.path.abspath(cover)}")
         temp_files.append(cover)
         self.cover = cover
 

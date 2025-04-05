@@ -52,7 +52,7 @@ class App:
 
         results = self.yt.search(self.args.query, filter=filter)  # pyright: ignore[reportUnknownMemberType, reportUnknownVariableType]
 
-        if self.args.is_debug:
+        if self.args.dump_json:
             with open("results.json", "w") as f:
                 json.dump(results, f)
 
