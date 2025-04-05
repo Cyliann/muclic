@@ -10,6 +10,14 @@ class Thumbnail(TypedDict):
     url: str
 
 
+class RequestedDownload(TypedDict):
+    """
+    JSON object in ytdlp download info; needed to find the file path.
+    """
+
+    filepath: str
+
+
 class SearchResult(TypedDict):
     """
     Result of a youtubemusic search independently of the filter.
@@ -56,6 +64,7 @@ class SongInfo(TypedDict):
     n_entries: int
     playlist_index: int
     thumbnails: list[Thumbnail]
+    requested_downloads: list[RequestedDownload]
 
 
 class AlbumInfo(TypedDict):

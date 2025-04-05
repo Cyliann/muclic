@@ -103,23 +103,23 @@ class Song(MediaItem):
         """
         from mutagen import mp4
 
+        logger = logging.getLogger()
+
         assert self.info is not None
 
         # asserting to SongInfo to silence the LSP
         # however TypedDicts are just dicts under the cover, so we cannot assert their type to be SongInfo, hence assert to dict
-        # that's the stupidest useless line of code I have ever written
+        # that's the stupidest, useless line of code I have ever written
         assert type(self.info) is SongInfo or type(self.info) is dict, (
             "that shouldn't be even possible"
         )
 
-        file = ""
-        for potential_file in os.listdir(self.path):
-            # Find the right file to tag
-            if fnmatch.fnmatch(potential_file, f"*{self.info['track']}.*"):
-                file = os.path.join(self.path, potential_file)
+        file = self.info["requested_downloads"][0]["filepath"]
 
-        logger = logging.getLogger()
+        logger.debug(f"Track name: {self.info['track']}")
+        logger.debug(f"File name: {file}")
         logger.info(f"Tagging file: {file}")
+
         tags = mp4.MP4(file).tags
         if tags is None:
             return
