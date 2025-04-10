@@ -33,6 +33,10 @@ def main() -> None:
             os.remove(file)
     except KeyboardInterrupt:
         sys.exit(0)
+    except ConnectionError as e:
+        logger = logging.getLogger()
+        logger.error("Check your connection: ", e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

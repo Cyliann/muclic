@@ -52,7 +52,9 @@ class Album(MediaItem):
         with YoutubeDL(ydl_opts) as ydl:
             self.info: AlbumInfo | SongInfo | None = cast(
                 AlbumInfo,
-                ydl.sanitize_info(ydl.extract_info(self.url)),  # pyright: ignore[reportUnknownMemberType]
+                ydl.sanitize_info(  # pyright: ignore[reportUnknownMemberType]
+                    ydl.extract_info(self.url, download=True, process=True)  # pyright: ignore[reportUnknownMemberType]
+                ),
             )
         self.add_songs()
 
