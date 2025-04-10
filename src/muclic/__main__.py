@@ -1,8 +1,10 @@
 #!/usr/bin/python
 # pyright: strict
 # pyright: reportUnnecessaryTypeIgnoreComment=false
+import logging
 import os
 import sys
+import yt_dlp.version  # pyright: ignore[reportMissingTypeStubs]
 
 import muclic.logging as logs
 from muclic.app import App
@@ -13,6 +15,11 @@ def main() -> None:
     try:
         app = App()
         ytlogger: logs.YtDLLogger = logs.setup_logging(app.args.is_debug)
+
+        if app.args.is_debug:
+            logger = logging.getLogger()
+            logger.debug(f"yt-dlp version: {yt_dlp.version.__version__}")
+
         search_results: list[SearchResult] = app.search()
         user_choices: list[int] = app.get_user_choices(search_results)
 
