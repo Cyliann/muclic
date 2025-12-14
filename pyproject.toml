@@ -1,6 +1,6 @@
 [project]
 name = "muclic"
-version = "0.2.4"
+version = "0.2.5"
 description = "A cli for downloading music from Youtube Music"
 authors = [
   { name = "Cyliann", email = "maksymilian@cych.eu" }
@@ -9,11 +9,14 @@ license = { file = "LICENSE" }
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-  "yt-dlp",
+  "yt-dlp>=2025.12.8",
   "requests",
   "ytmusicapi",
   "mutagen",
   "azapi>=3.0.8",
+  # needed for yt-dlp to solve js challenges
+  "deno>=2.0.0",
+  "yt-dlp-ejs>=0.3.2",
 ]
 
 [project.scripts]
