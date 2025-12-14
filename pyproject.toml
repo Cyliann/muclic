@@ -1,6 +1,6 @@
 [project]
 name = "muclic"
-version = "0.2.5"
+version = "0.2.6"
 description = "A cli for downloading music from Youtube Music"
 authors = [
   { name = "Cyliann", email = "maksymilian@cych.eu" }
